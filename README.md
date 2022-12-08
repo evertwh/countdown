@@ -1,2 +1,2 @@
 # countdown
-Countdown timer (e.g., for workshop assignments
+Countdown timer (e.g., for workshop assignments)
