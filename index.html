@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <base href="./images/">
+        <meta charset="UTF-8">
+        <meta name="viewport"
+            content="width=device-width,
+            initial-scale=1.0">
+        <title>Countdown</title>
+    </head>
+    <style>
+        .main {
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            background-color: black;
+            color: lightgray;
+            padding: 2px;
+        }
+        .button {
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            font-weight: bolder;
+            background-color: #f44336;
+            border: 2px solid #f44336;
+            color: black;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+        }
+        .sidepanel {
+            width: 250;
+            position: fixed;
+            z-index: 1;
+            height: 250px;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            padding-left: 6px;
+        }
+
+        .button:hover {
+            color: #f44336; 
+            background-color: black;
+        }
+        .clockface {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            -webkit-transform: translate(-50%, -50%);
+            -moz-transform: translate(-50%, -50%);
+            -o-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+
+            display:flex;
+            justify-content: space-around;
+            z-index: 100;
+        }
+        .digit {
+            margin: 24px;
+        }
+</style>
+<body class="main">
+
+    <!-- Fetching from CDN of D3.js -->
+    <script type="text/javascript"
+        src="https://d3js.org/d3.v4.min.js">
+    </script>
+
+    <script>
+        // Running time of the countdown in milliseconds
+        // I've added some constants to make life easier
+        let second = 1000
+        let minute = 60 * second
+        let hour = 60 * minute
+        var duration = 2 * minute
+
+        var timer 
+        var countdown_complete = false
+
+        // Assign the appropriate digit bitmaps
+        // hms: hours, minutes, seconds or milliseconds. Specified by 'H', 'M', 'S', 'm', respectively 
+        // PS. milliseconds are displayed as hundredths of seconds
+        function update_clockface(hms, value) {
+
+            if (hms == 'm') {
+                value = Math.floor(value / 10)
+            }
+
+            digit1 = Math.floor(value / 10)
+            digit2 = Math.round(value % 10)
+            
+            _img1 = document.getElementById(`${hms}1`);
+            _img1.src = `${digit1}.jpg`;    
+
+            _img2 = document.getElementById(`${hms}2`);
+            _img2.src = `${digit2}.jpg`;    
+        }
+
+        // Play sound to indicate that countdown reached zero
+        // Yes, this is an Anita Ward reference :-)
+        function ring_my_bell() {
+            var audio = new Audio('gong.mp3');
+            audio.play();
+        }
+
+        // Update the clockface to show remaining time
+        // Used as callback in timer
+        function show_remaining_time(elapsed) {
+            
+            milliseconds_remaining = Math.round(duration - elapsed)
+
+            if (milliseconds_remaining < 0) {
+                milliseconds_remaining = 0;
+            }
+
+            seconds_remaining = Math.floor(milliseconds_remaining / 1000);
+            milliseconds_remaining = milliseconds_remaining % 1000; 
+
+            hours_remaining = Math.floor(seconds_remaining / 3600);
+            seconds_remaining = seconds_remaining % 3600;
+
+            minutes_remaining = Math.floor(seconds_remaining / 60);
+            seconds_remaining = seconds_remaining % 60;
+
+            update_clockface('H', hours_remaining);
+            update_clockface('M', minutes_remaining);
+            update_clockface('S', seconds_remaining);
+            update_clockface('m', milliseconds_remaining);
+
+            if (elapsed >= duration) {
+                countdown_complete = true;
+
+                console.log("Timer stopped");
+                ring_my_bell();
+                timer.stop();
+
+            }
+        }
+    
+        // Start the clock and hide the start button
+        function start_countdown() {
+            timer = d3.interval(show_remaining_time, 50);
+
+            _settings = document.getElementById(`settings`);
+
+            _settings.style.display = 'none';        
+
+            document.documentElement.requestFullscreen();
+
+
+
+            // enable a warning that reloading resets the timer
+            window.addEventListener("beforeunload", function (e) {
+                if (countdown_complete) {
+                    return undefined;
+                }
+                // else
+
+                confirmationMessage = "The countdown hasn't finished yet. "
+                                + "Reloading will reset the countdown.";
+
+                (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+                return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+            });
+        }
+
+        // Read duration from settings and update clockface
+        function set_duration() {
+        
+            date = Date.parse(`01 Dec 1970 ${duration_control.value}`)
+            offset = Date.parse(`01 Dec 1970 00:00:00`)
+
+            console.log(`duration: ${date-offset}`);
+
+            duration = date-offset;
+
+            show_remaining_time(0);
+        }
+
+        // Set clockface on window load
+        function init() {
+            duration_control = document.getElementById(`duration`);
+            duration_control.value = '00:00:10';
+            set_duration();
+        }
+
+        window.onload = init;
+    </script>
+
+    <div class="clockface">
+
+        <div class="digit"><img id="H1" src="0.jpg" width="134"
+                height="245"></div>
+        <div class="digit"><img id="H2" src="0.jpg" width="134"
+                height="245"></div>
+
+        <div class="digit"><img src="separator.jpg"></div>
+
+        <div class="digit"><img id="M1" src="0.jpg" width="134"
+                height="245"></div>
+        <div class="digit"><img id="M2" src="0.jpg" width="134"
+                height="245"></div>
+
+        <div class="digit"><img src="separator.jpg"></div>
+
+        <div class="digit"><img id="S1" src="0.jpg" width="134"
+                height="245"></div>
+        <div class="digit"><img id="S2" src="0.jpg" width="134"
+                height="245"></div>
+                
+        <!-- (Un)hide the three divs below (by adding/removing the 'hidden' attribute) to show/hide milliseconds-->    
+        <div hidden class="digit milliseconds"><img src="separator.jpg"></div>
+
+        <div hidden class="digit milliseconds"><img id="m1" src="0.jpg" width="134"
+            height="245"></div>
+        <div hidden class="digit milliseconds"><img id="m2" src="0.jpg" width="134"
+            height="245"></div>
+
+    </div>
+
+    <div ID="settings" class="sidepanel">
+        <p>Countdown duration:<br> <input id="duration" onchange="set_duration()" type="time" name="appt-time" step="1" /></p>
+        <button class="button" ID="start_button" onclick="start_countdown()" href="#">Start countdown</button>
+    </div>
+
+</body>
+</html>
